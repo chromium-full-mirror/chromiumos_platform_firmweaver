@@ -1,0 +1,3 @@
+# All AP and EC firmware team members can approve.
+include chromiumos/owners:v1:/firmware/OWNERS.cros_ap
+include chromiumos/owners:v1:/firmware/OWNERS.cros_ec
