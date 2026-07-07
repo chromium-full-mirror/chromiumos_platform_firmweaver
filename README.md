@@ -23,11 +23,40 @@ and contribute them to the concerned project.
 
 ## Getting Started
 
-*(Add instructions on how to set up the environment and get started with Firmweaver.)*
+### Building the GPIO Tool
+
+The GPIO tool is located in the `ap_fw` directory.
+
+1. Navigate to the `ap_fw` directory:
+   ```bash
+   cd ap_fw
+   ```
+2. Build the tool:
+   ```bash
+   go build -o gpio_tool
+   ```
+   This will generate the `gpio_tool` executable in the `ap_fw` directory.
 
 ## Usage
 
-*(Add instructions on how to run the tools, including required arguments and input file formats.)*
+### Running the GPIO Tool
+
+The `gpio_tool` parses a GPIO map CSV file and generates C configuration code.
+
+```bash
+./ap_fw/gpio_tool --soc <soc_type> --csv <path_to_csv> [--output <path_to_output_c_file>]
+```
+
+#### Arguments:
+*   `--soc`: SoC type. Supported values: `intel`, `qcom`, `mtk`. (Required)
+*   `--csv`: Path to the local CSV file containing the GPIO map. (Required)
+*   `--output`: Path to the output file. If omitted, output is written to stdout.
+
+#### Example:
+To generate Intel GPIO configuration from the provided example CSV:
+```bash
+./ap_fw/gpio_tool --soc intel --csv ap_fw/test/ExampleGpio.csv --output ap_fw/test/gpio_config.c
+```
 
 ## Contributing
 
