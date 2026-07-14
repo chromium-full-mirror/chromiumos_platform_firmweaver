@@ -1,0 +1,9 @@
+# Binaries
+ec_fw/ec_fw
+ap_fw/gpio_tool
+
+# Go test binaries
+*.test
+
+# IDEs
+.vscode/

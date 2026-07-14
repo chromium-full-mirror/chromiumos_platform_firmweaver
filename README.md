@@ -18,8 +18,8 @@ and contribute them to the concerned project.
 
 *   **Automatic Generation**: Generates firmware objects from hardware sheets.
 *   **Supported Outputs**:
-    *   EC Devicetree
-    *   AP GPIO Configuration
+    *   EC Devicetree (`ec_fw`)
+    *   AP GPIO Configuration (`ap_fw`)
 
 ## Getting Started
 
@@ -36,6 +36,20 @@ The GPIO tool is located in the `ap_fw` directory.
    go build -o gpio_tool
    ```
    This will generate the `gpio_tool` executable in the `ap_fw` directory.
+
+### Building the EC Devicetree Generator
+
+The EC Devicetree generator is located in the `ec_fw` directory. See [`ec_fw/README.md`](ec_fw/README.md) for full details.
+
+1. Navigate to the `ec_fw` directory:
+   ```bash
+   cd ec_fw
+   ```
+2. Build the tool:
+   ```bash
+   go build -o ec_fw
+   ```
+   This will generate the `ec_fw` executable in the `ec_fw` directory.
 
 ## Usage
 
@@ -56,6 +70,28 @@ The `gpio_tool` parses a GPIO map CSV file and generates C configuration code.
 To generate Intel GPIO configuration from the provided example CSV:
 ```bash
 ./ap_fw/gpio_tool --soc intel --csv ap_fw/test/ExampleGpio.csv --output ap_fw/test/gpio_config.c
+```
+
+### Running the EC Devicetree Generator
+
+The `ec_fw` tool parses an EC pinout CSV spreadsheet and generates Zephyr devicetree overlays.
+
+```bash
+./ec_fw/ec_fw --chip <chip_name> --csv <path_to_csv> [--pin-col <variant>] [--output <path_to_output_dtsi>]
+```
+
+#### Example:
+To generate Nuvoton NPCX9 Devicetree overlay from the provided example CSV:
+```bash
+./ec_fw/ec_fw --chip npcx99 --csv ec_fw/test/ExampleEcPinout.csv --pin-col "NPCX99 (NPCX)" --output ec_fw/test/generated.dtsi
+```
+
+## Testing
+
+Run unit tests across all tools in the workspace:
+
+```bash
+go test -v ./...
 ```
 
 ## Contributing

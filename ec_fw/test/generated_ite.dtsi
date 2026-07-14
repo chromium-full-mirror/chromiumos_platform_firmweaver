@@ -1,0 +1,104 @@
+/* Copyright 2026 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * This file is auto-generated - do not edit!
+ */
+
+/ {
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_temp_sensor_1: temp_sensor_1 {
+			io-channels = <&adc0 4>;
+		};
+		adc_temp_sensor_2: temp_sensor_2 {
+			io-channels = <&adc0 5>;
+		};
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_cpu_c10_gate_l: cpu_c10_gate_l {
+			gpios = <&gpioj 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_en_edp_bl: ec_en_edp_bl {
+			gpios = <&gpioc 6 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_ec_soc_rsmrst_l: ec_soc_rsmrst_l {
+			gpios = <&gpiob 2 (GPIO_OUTPUT | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_LOW)>;
+		};
+		gpio_ec_voldn_btn_odl: ec_voldn_btn_odl {
+			gpios = <&gpioa 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_volup_btn_odl: ec_volup_btn_odl {
+			gpios = <&gpioa 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_lid_open: lid_open {
+			gpios = <&gpiod 3 (GPIO_INPUT | GPIO_ACTIVE_HIGH)>;
+		};
+		gpio_tablet_mode_l: tablet_mode_l {
+			gpios = <&gpiod 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_ec_i2c_pd1_prog: ec_i2c_pd1_prog {
+			i2c-port = <&i2c1>;
+		};
+	};
+
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <
+		&adc0_ch4_gpi4_default
+		&adc0_ch5_gpi5_default
+	>;
+	pinctrl-names = "default";
+};
+
+&i2c1 {
+	status = "okay";
+	pinctrl-0 = <
+		&i2c1_clk_gpc1_default
+		&i2c1_data_gpc2_default
+	>;
+	pinctrl-names = "default";
+};
+
+&pwm1 {
+	status = "okay";
+	pinctrl-0 = <&pwm1_gpa1_default>;
+	pinctrl-names = "default";
+};
+
+&pwm6 {
+	status = "okay";
+	pinctrl-0 = <&pwm6_gpa6_default>;
+	pinctrl-names = "default";
+};
+
+&tach0 {
+	status = "okay";
+	pinctrl-0 = <&tach0a_gpd6_default>;
+	pinctrl-names = "default";
+};
+
+&kbd {
+	status = "okay";
+	pinctrl-0 = <
+		&ksi0_default
+		&ksi1_default
+		&kso0_default
+		&kso1_default
+	>;
+	pinctrl-names = "default";
+	row-size = <2>;
+	col-size = <2>;
+};
