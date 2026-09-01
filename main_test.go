@@ -6,6 +6,9 @@ package main
 
 import (
 	"testing"
+	"time"
+
+	"firmweaver/shared/auth"
 )
 
 func TestRun_SubcommandRouting(t *testing.T) {
@@ -41,5 +44,29 @@ func TestRun_SubcommandRouting(t *testing.T) {
 	}
 	if err := run([]string{"invalid"}); err == nil {
 		t.Error("run('invalid') expected error for unknown command, got nil")
+	}
+}
+
+func TestFirmweaverRootCLI_AuthSubcommands(t *testing.T) {
+	t.Setenv(auth.ConfigDirEnv, t.TempDir())
+
+	if err := run([]string{"auth", "status"}); err != nil {
+		t.Errorf("auth status failed: %v", err)
+	}
+
+	_ = auth.SaveToken(&auth.Token{
+		AccessToken: "mock-bearer-token",
+		Expiry:      time.Now().Add(time.Hour),
+		Email:       "developer@google.com",
+	})
+
+	if err := run([]string{"auth", "status"}); err != nil {
+		t.Errorf("auth status failed: %v", err)
+	}
+	if err := run([]string{"auth", "token"}); err != nil {
+		t.Errorf("auth token failed: %v", err)
+	}
+	if err := run([]string{"auth", "logout"}); err != nil {
+		t.Errorf("auth logout failed: %v", err)
 	}
 }

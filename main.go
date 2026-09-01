@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"os"
 
 	"firmweaver/coreboot_gpio"
+	"firmweaver/shared/auth"
 	"firmweaver/zephyr_dtsi"
 )
 
@@ -22,6 +24,7 @@ Usage:
   firmweaver <command> [flags...]
 
 Available Commands:
+  auth                 Manage Google authentication (login, status, logout, token)
   coreboot_gpio (alias: gpio)    Generate AP SoC GPIO configurations
   zephyr_dtsi   (alias: dtsi)    Generate EC Devicetree (DTSI) pinmux configurations`)
 }
@@ -39,10 +42,12 @@ func main() {
 func run(args []string) error {
 	if len(args) == 0 {
 		printUsage(os.Stderr)
-		return fmt.Errorf("subcommand required: 'coreboot_gpio' or 'zephyr_dtsi'")
+		return fmt.Errorf("subcommand required: 'auth', 'coreboot_gpio', or 'zephyr_dtsi'")
 	}
 
 	switch args[0] {
+	case "auth":
+		return auth.HandleAuthCLI(context.Background(), args[1:])
 	case "coreboot_gpio", "gpio":
 		err := coreboot_gpio.Run(args[1:])
 		if errors.Is(err, flag.ErrHelp) {
