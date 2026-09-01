@@ -5,12 +5,15 @@
 package zephyr_dtsi
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+
+	"firmweaver/shared/sheets"
 )
 
 // Run executes the EC firmware pinmux DTSI generation logic.
@@ -18,6 +21,8 @@ func Run(args []string) error {
 	fs := flag.NewFlagSet("zephyr_dtsi", flag.ContinueOnError)
 	chipFlag := fs.String("chip", "", "Supported EC chip name or alias (e.g. npcx99, it82002)")
 	csvFlag := fs.String("csv", "", "Path to the local EC pinout CSV file")
+	sheetFlag := fs.String("sheet", "", "Google Sheets URL, ID, or go/ shortlink")
+	sheetTabFlag := fs.String("sheet-tab", "", "Optional: Specific Google Sheet tab title to read")
 	pinColFlag := fs.String("pin-col", "", "Optional: Column header containing pin numbers")
 	chipDataDirFlag := fs.String("chip-data-dir", "", "Optional: Path to directory containing custom chip JSON data files")
 	outputFlag := fs.String("output", "", "Path to the output DTSI file (defaults to stdout)")
@@ -41,8 +46,14 @@ func Run(args []string) error {
 	if *chipFlag == "" {
 		return fmt.Errorf("--chip is required (available: %s)", GetAvailableChips())
 	}
-	if *csvFlag == "" {
-		return fmt.Errorf("--csv is required")
+	if *csvFlag != "" && *sheetFlag != "" {
+		return fmt.Errorf("cannot specify both --csv and --sheet")
+	}
+	if *csvFlag == "" && *sheetFlag == "" {
+		return fmt.Errorf("either --csv or --sheet must be provided")
+	}
+	if *sheetTabFlag != "" && *sheetFlag == "" {
+		return fmt.Errorf("--sheet-tab can only be used with --sheet")
 	}
 
 	chip, ok := GetChip(*chipFlag)
@@ -50,15 +61,28 @@ func Run(args []string) error {
 		return fmt.Errorf("unsupported chip %q (available: %s)", *chipFlag, GetAvailableChips())
 	}
 
-	csvFile, err := os.Open(*csvFlag)
-	if err != nil {
-		return fmt.Errorf("opening CSV file: %w", err)
-	}
-	defer csvFile.Close()
+	var configs []PinConfig
+	var err error
+	if *sheetFlag != "" {
+		records, fetchErr := sheets.Fetch(context.Background(), *sheetFlag, *sheetTabFlag)
+		if fetchErr != nil {
+			return fmt.Errorf("fetching sheet data: %w", fetchErr)
+		}
+		configs, err = ParseRecords(records, *pinColFlag)
+		if err != nil {
+			return fmt.Errorf("parsing sheet records: %w", err)
+		}
+	} else {
+		csvFile, openErr := os.Open(*csvFlag)
+		if openErr != nil {
+			return fmt.Errorf("opening CSV file: %w", openErr)
+		}
+		defer csvFile.Close()
 
-	configs, err := ParseCSV(csvFile, *pinColFlag)
-	if err != nil {
-		return fmt.Errorf("parsing CSV: %w", err)
+		configs, err = ParseCSV(csvFile, *pinColFlag)
+		if err != nil {
+			return fmt.Errorf("parsing CSV: %w", err)
+		}
 	}
 
 	var out io.Writer = os.Stdout

@@ -31,19 +31,30 @@ Build the `firmweaver` binary from the repository root:
 go build -o firmweaver .
 ```
 
+### Authentication
+
+Login to use Google Sheets:
+
+```bash
+./firmweaver auth login
+./firmweaver auth status
+```
+
 ## Usage
 
 ### Running the Coreboot GPIO Tool
 
-The `coreboot_gpio` (alias: `gpio`) parses a GPIO map CSV file and generates C configuration code.
+The `coreboot_gpio` (alias: `gpio`) parses a GPIO map CSV file or Google Sheet and generates C configuration code.
 
 ```bash
-./firmweaver coreboot_gpio --soc <soc_type> --csv <path_to_csv> [--output <path_to_output_c_file>]
+./firmweaver coreboot_gpio --soc <soc_type> (--csv <path_to_csv> | --sheet <sheet_url_or_id>) [--output <path_to_output_c_file>]
 ```
 
 #### Arguments:
 *   `--soc`: SoC type. Supported values: `intel`, `qcom`, `mtk`. (Required)
-*   `--csv`: Path to the local CSV file containing the GPIO map. (Required)
+*   `--csv`: Path to the local CSV file containing the GPIO map.
+*   `--sheet`: Google Sheets URL, ID, or `go/` shortlink.
+*   `--sheet-tab`: Optional specific sheet tab title to read.
 *   `--output`: Path to the output file. If omitted, output is written to stdout.
 
 #### Example:
@@ -53,12 +64,17 @@ To generate Intel GPIO configuration from the provided example CSV:
 ```
 *(You can also use the shorthand `./firmweaver gpio ...`)*
 
+Or directly from a Google Sheet:
+```bash
+./firmweaver coreboot_gpio --soc intel --sheet "go/firmweaver-example-gpio-go-link" --output coreboot_gpio/test/gpio_config.c
+```
+
 ### Running the EC Zephyr Devicetree Generator
 
-The `zephyr_dtsi` (alias: `dtsi`) parses an EC pinout CSV spreadsheet and generates Zephyr devicetree overlays.
+The `zephyr_dtsi` (alias: `dtsi`) parses an EC pinout CSV spreadsheet or Google Sheet and generates Zephyr devicetree overlays.
 
 ```bash
-./firmweaver zephyr_dtsi --chip <chip_name> --csv <path_to_csv> [--pin-col <variant>] [--output <path_to_output_dtsi>]
+./firmweaver zephyr_dtsi --chip <chip_name> (--csv <path_to_csv> | --sheet <sheet_url_or_id>) [--pin-col <variant>] [--output <path_to_output_dtsi>]
 ```
 
 #### Example:
@@ -67,6 +83,11 @@ To generate Nuvoton NPCX9 Devicetree overlay from the provided example CSV:
 ./firmweaver zephyr_dtsi --chip npcx99 --csv zephyr_dtsi/test/ExampleEcPinout.csv --pin-col "NPCX99 (NPCX)" --output zephyr_dtsi/test/generated.dtsi
 ```
 *(You can also use the shorthand `./firmweaver dtsi ...`)*
+
+Or directly from a Google Sheet:
+```bash
+./firmweaver zephyr_dtsi --chip npcx99 --sheet "go/firmweaver-example-ec-go-link" --output zephyr_dtsi/test/generated.dtsi
+```
 
 ## Testing
 

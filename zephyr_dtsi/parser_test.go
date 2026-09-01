@@ -147,6 +147,18 @@ N/A,B4,EC_GPIO_IN,IN,
 	if configs[0].PinNumber != "B3" || configs[0].NetName != "EC_I2C_SCL" {
 		t.Errorf("Fallback failed, got config: %+v", configs[0])
 	}
+
+	// Test fallback when primary header has NO parentheses
+	csvNoParens := `PinNumber,AltPin,NetName,IO,Enum
+N/A,C2,EC_I2C_SDA,I2C,I2C_PORT_0
+`
+	configsNoParens, err := ParseCSV(strings.NewReader(csvNoParens), "AltPin")
+	if err != nil {
+		t.Fatalf("ParseCSV (no parens) failed: %v", err)
+	}
+	if len(configsNoParens) != 1 || configsNoParens[0].PinNumber != "C2" {
+		t.Errorf("Fallback without parens failed, got: %+v", configsNoParens)
+	}
 }
 
 func TestParseCSV_TypeAndConditionNormalizations(t *testing.T) {
@@ -201,5 +213,41 @@ A1,EC_GPIO_A1
 	}
 	if configs[0].PinNumber != "A1" || configs[0].NetName != "EC_GPIO_A1" {
 		t.Errorf("Unexpected config: %+v", configs[0])
+	}
+}
+
+func TestParseRecords(t *testing.T) {
+	if _, err := ParseRecords(nil, "NPCX"); err == nil {
+		t.Errorf("expected error for nil records")
+	}
+	if _, err := ParseRecords([][]string{}, "NPCX"); err == nil {
+		t.Errorf("expected error for empty records")
+	}
+
+	records := [][]string{
+		{"Signal Name", "NPCX99 (NPCX)", "DIR"},
+		{"EC_WP_ODL", "A1", "IN"},
+	}
+	configs, err := ParseRecords(records, "NPCX")
+	if err != nil {
+		t.Fatalf("ParseRecords failed: %v", err)
+	}
+	if len(configs) != 1 || configs[0].PinNumber != "A1" || configs[0].NetName != "EC_WP_ODL" {
+		t.Errorf("unexpected configs from ParseRecords: %+v", configs)
+	}
+}
+
+func TestParseRecords_FormulaErrors(t *testing.T) {
+	records := [][]string{
+		{"Signal Name", "DIR", "IO Type", "Enum", "NPCX99 (NPCX)", "NPCX99 (Board)"},
+		{"EC_I2C_SCL", "IO", "I2C", "I2C_PORT_0", "#REF!", "B3"},
+		{"EC_BROKEN_PIN", "IN", "", "", "#VALUE!", "#N/A"},
+	}
+	configs, err := ParseRecords(records, "NPCX")
+	if err != nil {
+		t.Fatalf("ParseRecords failed: %v", err)
+	}
+	if len(configs) != 1 || configs[0].PinNumber != "B3" {
+		t.Fatalf("Expected fallback pin B3, got: %+v", configs)
 	}
 }

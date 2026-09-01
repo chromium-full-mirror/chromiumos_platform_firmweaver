@@ -5,6 +5,7 @@
 package coreboot_gpio
 
 import (
+	"context"
 	"encoding/csv"
 	"errors"
 	"flag"
@@ -15,6 +16,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"firmweaver/shared/sheets"
 )
 
 // GPIOPin represents a single generic GPIO pin configuration.
@@ -77,12 +80,20 @@ func parseGenericCSV(records [][]string) ([]GPIOPin, error) {
 	return gpioPins, nil
 }
 
-// Run executes the AP firmware GPIO configuration generation logic.
+// Run executes the coreboot_gpio subcommand with the provided arguments.
 func Run(args []string) error {
 	fs := flag.NewFlagSet("coreboot_gpio", flag.ContinueOnError)
-	soc := fs.String("soc", "", "SoC type (intel, qcom, or mtk)")
-	csvFile := fs.String("csv", "", "Local file path for GPIO map CSV")
-	outputFile := fs.String("output", "", "Output file path")
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "Usage: firmweaver coreboot_gpio --soc=<soc> (--csv=<path> | --sheet=<url>) [options]\n\n")
+		fmt.Fprintf(fs.Output(), "Flags:\n")
+		fs.PrintDefaults()
+	}
+
+	soc := fs.String("soc", "", "SoC architecture (supported: intel, qcom, mtk)")
+	csvFile := fs.String("csv", "", "Path to GPIO map CSV file")
+	sheetFlag := fs.String("sheet", "", "Google Sheet URL, go/ link, or spreadsheet ID")
+	sheetTabFlag := fs.String("sheet-tab", "", "Google Sheet tab name (defaults to first tab)")
+	outputFile := fs.String("output", "", "Path to output generated file (defaults to stdout)")
 
 	if err := fs.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
@@ -90,6 +101,7 @@ func Run(args []string) error {
 		}
 		return err
 	}
+
 	if len(fs.Args()) > 0 {
 		return fmt.Errorf("unexpected arguments: %v", fs.Args())
 	}
@@ -97,26 +109,40 @@ func Run(args []string) error {
 	if *soc == "" {
 		return fmt.Errorf("--soc flag is required")
 	}
-
-	if *csvFile == "" {
-		return fmt.Errorf("--csv flag is required")
+	if *csvFile != "" && *sheetFlag != "" {
+		return fmt.Errorf("cannot specify both --csv and --sheet; choose one input source")
 	}
-
-	// Open the local CSV file
-	file, err := os.Open(*csvFile)
-	if err != nil {
-		return fmt.Errorf("opening CSV file: %w", err)
+	if *csvFile == "" && *sheetFlag == "" {
+		return fmt.Errorf("either --csv or --sheet is required")
 	}
-	defer file.Close()
+	if *sheetTabFlag != "" && *sheetFlag == "" {
+		return fmt.Errorf("--sheet-tab is only valid with --sheet")
+	}
 
 	fmt.Fprintf(os.Stderr, "SoC: %s\n", *soc)
-	fmt.Fprintf(os.Stderr, "Reading GPIO map from: %s\n", *csvFile)
 
-	reader := csv.NewReader(file)
-	reader.FieldsPerRecord = -1
-	records, err := reader.ReadAll()
-	if err != nil {
-		return fmt.Errorf("parsing CSV: %w", err)
+	var records [][]string
+	var err error
+	if *sheetFlag != "" {
+		fmt.Fprintf(os.Stderr, "Reading GPIO map from Google Sheet: %s\n", *sheetFlag)
+		records, err = sheets.Fetch(context.Background(), *sheetFlag, *sheetTabFlag)
+		if err != nil {
+			return fmt.Errorf("fetching Google Sheet: %w", err)
+		}
+	} else {
+		fmt.Fprintf(os.Stderr, "Reading GPIO map from: %s\n", *csvFile)
+		file, openErr := os.Open(*csvFile)
+		if openErr != nil {
+			return fmt.Errorf("opening CSV file: %w", openErr)
+		}
+		defer file.Close()
+
+		reader := csv.NewReader(file)
+		reader.FieldsPerRecord = -1
+		records, err = reader.ReadAll()
+		if err != nil {
+			return fmt.Errorf("parsing CSV: %w", err)
+		}
 	}
 
 	var outputWriter io.Writer
