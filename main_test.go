@@ -9,9 +9,11 @@ import (
 	"time"
 
 	"firmweaver/shared/auth"
+	"firmweaver/shared/metrics"
 )
 
 func TestRun_SubcommandRouting(t *testing.T) {
+	t.Setenv(metrics.DisableMetricsEnv, "1")
 	if err := run([]string{}); err == nil {
 		t.Error("run([]) expected error for missing subcommand, got nil")
 	}

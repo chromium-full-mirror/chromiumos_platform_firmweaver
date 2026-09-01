@@ -12,12 +12,35 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
+	"firmweaver/shared/metrics"
 	"firmweaver/shared/sheets"
 )
 
 // Run executes the EC firmware pinmux DTSI generation logic.
-func Run(args []string) error {
+func Run(args []string) (runErr error) {
+	start := time.Now()
+	ev := metrics.NewEvent("zephyr_dtsi", "generate")
+	ev.Flags = args
+	var isHelp bool
+	defer func() {
+		if isHelp {
+			return
+		}
+		if r := recover(); r != nil {
+			runErr = fmt.Errorf("panic: %v", r)
+			defer panic(r)
+		}
+		ev.DurationMs = time.Since(start).Milliseconds()
+		if runErr != nil {
+			ev.ErrorMsg = runErr.Error()
+		} else {
+			ev.Success = true
+		}
+		metrics.Send(ev)
+	}()
+
 	fs := flag.NewFlagSet("zephyr_dtsi", flag.ContinueOnError)
 	chipFlag := fs.String("chip", "", "Supported EC chip name or alias (e.g. npcx99, it82002)")
 	csvFlag := fs.String("csv", "", "Path to the local EC pinout CSV file")
@@ -29,12 +52,21 @@ func Run(args []string) error {
 
 	if err := fs.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
+			isHelp = true
 			return nil
 		}
 		return err
 	}
 	if len(fs.Args()) > 0 {
 		return fmt.Errorf("unexpected arguments: %v", fs.Args())
+	}
+
+	ev.TargetChip = *chipFlag
+	ev.VariantHeader = *pinColFlag
+	if *sheetFlag != "" {
+		ev.InputMode = "sheet"
+	} else if *csvFlag != "" {
+		ev.InputMode = "csv"
 	}
 
 	if *chipDataDirFlag != "" {

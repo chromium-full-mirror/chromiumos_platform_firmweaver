@@ -16,15 +16,17 @@ import (
 	"time"
 
 	"firmweaver/shared/auth"
+	"firmweaver/shared/metrics"
 	"firmweaver/shared/sheets"
 )
 
 func TestDtsiTool_RunFlagValidation(t *testing.T) {
+	t.Setenv(metrics.DisableMetricsEnv, "1")
 	if err := Run([]string{"-h"}); err != nil {
 		t.Errorf("Run('-h') unexpected error: %v", err)
 	}
 	if err := Run([]string{"--help"}); err != nil {
-		t.Errorf("Run(--help) expected nil, got %v", err)
+		t.Errorf("Run('--help') unexpected error: %v", err)
 	}
 	if err := Run([]string{"--chip=npcx99", "--csv=test/ExampleEcPinout.csv", "--sheet=go/rex-pins"}); err == nil {
 		t.Errorf("expected error when both --csv and --sheet specified")
@@ -44,6 +46,7 @@ func TestDtsiTool_RunFlagValidation(t *testing.T) {
 }
 
 func TestDtsiTool_RunSuccess(t *testing.T) {
+	t.Setenv(metrics.DisableMetricsEnv, "1")
 	out := filepath.Join(t.TempDir(), "out.dtsi")
 	err := Run([]string{
 		"--chip=npcx99",
@@ -70,6 +73,7 @@ const (
 )
 
 func TestDtsiTool_RunSheetIntegration(t *testing.T) {
+	t.Setenv(metrics.DisableMetricsEnv, "1")
 	t.Setenv(auth.ConfigDirEnv, t.TempDir())
 
 	_ = auth.SaveToken(&auth.Token{

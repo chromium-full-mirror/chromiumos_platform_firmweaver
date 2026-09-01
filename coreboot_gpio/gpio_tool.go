@@ -16,7 +16,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
+	"firmweaver/shared/metrics"
 	"firmweaver/shared/sheets"
 )
 
@@ -81,7 +83,28 @@ func parseGenericCSV(records [][]string) ([]GPIOPin, error) {
 }
 
 // Run executes the coreboot_gpio subcommand with the provided arguments.
-func Run(args []string) error {
+func Run(args []string) (runErr error) {
+	start := time.Now()
+	ev := metrics.NewEvent("coreboot_gpio", "generate")
+	ev.Flags = args
+	var isHelp bool
+	defer func() {
+		if isHelp {
+			return
+		}
+		if r := recover(); r != nil {
+			runErr = fmt.Errorf("panic: %v", r)
+			defer panic(r)
+		}
+		ev.DurationMs = time.Since(start).Milliseconds()
+		if runErr != nil {
+			ev.ErrorMsg = runErr.Error()
+		} else {
+			ev.Success = true
+		}
+		metrics.Send(ev)
+	}()
+
 	fs := flag.NewFlagSet("coreboot_gpio", flag.ContinueOnError)
 	fs.Usage = func() {
 		fmt.Fprintf(fs.Output(), "Usage: firmweaver coreboot_gpio --soc=<soc> (--csv=<path> | --sheet=<url>) [options]\n\n")
@@ -97,6 +120,7 @@ func Run(args []string) error {
 
 	if err := fs.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
+			isHelp = true
 			return nil
 		}
 		return err
@@ -104,6 +128,15 @@ func Run(args []string) error {
 
 	if len(fs.Args()) > 0 {
 		return fmt.Errorf("unexpected arguments: %v", fs.Args())
+	}
+
+	if *soc != "" {
+		ev.TargetSoC = *soc
+	}
+	if *sheetFlag != "" {
+		ev.InputMode = "sheet"
+	} else if *csvFile != "" {
+		ev.InputMode = "csv"
 	}
 
 	if *soc == "" {
