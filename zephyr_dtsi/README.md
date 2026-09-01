@@ -1,6 +1,6 @@
-# EC Firmware Devicetree Generator (`ec_fw`)
+# EC Firmware Devicetree Generator (`zephyr_dtsi`)
 
-`ec_fw` is a tool for generating Zephyr EC Devicetree configuration files (`generated.dtsi`) for Chromium OS EC board bringup.
+`zephyr_dtsi` is a tool for generating Zephyr EC Devicetree configuration files (`generated.dtsi`) for Chromium OS EC board bringup.
 
 It ingests hardware pinout CSV spreadsheets prepared by board design teams and outputs a self-contained Zephyr Devicetree overlay containing named GPIOs, ADC channels, PWM channels, I2C ports, TACH channels, and Keyboard matrix configurations.
 
@@ -28,7 +28,7 @@ It ingests hardware pinout CSV spreadsheets prepared by board design teams and o
 ## CLI Reference
 
 ```bash
-go run ./ec_fw --chip=<chip_name> --csv=<path_to_csv> [options]
+./firmweaver dtsi --chip=<chip_name> --csv=<path_to_csv> [options]
 ```
 
 ### Options
@@ -46,29 +46,29 @@ go run ./ec_fw --chip=<chip_name> --csv=<path_to_csv> [options]
 ## Usage Examples
 
 ### 1. Generating Devicetree Using the Bundled Test Example
-To test generating a `generated.dtsi` file from the example test CSV included in `ec_fw/test/`:
+To test generating a `generated.dtsi` file from the example test CSV included in `zephyr_dtsi/test/`:
 
 For NPCX (using `npcx99` chip):
 ```bash
-go run ./ec_fw --chip=npcx99 \
-               --csv=ec_fw/test/ExampleEcPinout.csv \
+./firmweaver dtsi --chip=npcx99 \
+               --csv=zephyr_dtsi/test/ExampleEcPinout.csv \
                --pin-col="NPCX99 (NPCX)" \
-               --output=ec_fw/test/generated_npcx.dtsi
+               --output=zephyr_dtsi/test/generated_npcx.dtsi
 ```
 
 For ITE (using `it82002` chip):
 ```bash
-go run ./ec_fw --chip=it82002 \
-               --csv=ec_fw/test/ExampleEcPinout.csv \
+./firmweaver dtsi --chip=it82002 \
+               --csv=zephyr_dtsi/test/ExampleEcPinout.csv \
                --pin-col="IT82002 (ITE)" \
-               --output=ec_fw/test/generated_ite.dtsi
+               --output=zephyr_dtsi/test/generated_ite.dtsi
 ```
 
 ### 2. Generating Devicetree for Board Variants
 To generate a `generated.dtsi` file for the Fatcat **RVP** (NPCX chip):
 
 ```bash
-go run ./ec_fw --chip=npcx99 \
+./firmweaver dtsi --chip=npcx99 \
                --csv=/path/to/fatcat.csv \
                --pin-col="NPCx9 RVP" \
                --output=/path/to/platform/ec/zephyr/program/fatcat/generated_npcx.dtsi
@@ -77,18 +77,18 @@ go run ./ec_fw --chip=npcx99 \
 To generate for the Fatcat **ITE** variant:
 
 ```bash
-go run ./ec_fw --chip=it82002 \
+./firmweaver dtsi --chip=it82002 \
                --csv=/path/to/fatcat.csv \
                --pin-col="IT82002 Ref" \
                --output=/path/to/platform/ec/zephyr/program/fatcat/generated_ite.dtsi
 ```
 
 ### 3. Building and Running Binary
-Build the standalone `ec_fw` binary from the repository root:
+Build the standalone `zephyr_dtsi` binary from the repository root:
 
 ```bash
-go build -o ec_fw ./ec_fw
-./ec_fw --chip=it82202ax --csv=/path/to/hylia.csv --output=generated.dtsi
+go build -o firmweaver .
+./firmweaver dtsi --chip=it82202ax --csv=/path/to/hylia.csv --output=generated.dtsi
 ```
 
 ### 4. Adding Custom Chip Pin Maps
@@ -106,12 +106,12 @@ To register custom EC chip models at runtime without modifying code:
    ```
 2. Pass the directory containing your JSON file to `--chip-data-dir`:
    ```bash
-   go run ./ec_fw --chip-data-dir=/path/to/custom_chips --chip=custom_chip --csv=board.csv
+   ./firmweaver dtsi --chip-data-dir=/path/to/custom_chips --chip=custom_chip --csv=board.csv
    ```
 
 ### 5. Running Tests
-Run unit tests across the `ec_fw` tool:
+Run unit tests across the `zephyr_dtsi` tool:
 
 ```bash
-go test -v ./ec_fw/...
+go test -v ./zephyr_dtsi/...
 ```

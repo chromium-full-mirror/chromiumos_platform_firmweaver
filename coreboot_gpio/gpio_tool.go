@@ -2,15 +2,17 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-package main
+package coreboot_gpio
 
 import (
 	"encoding/csv"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -75,42 +77,35 @@ func parseGenericCSV(records [][]string) ([]GPIOPin, error) {
 	return gpioPins, nil
 }
 
-func main() {
-	soc := flag.String("soc", "", "SoC type (intel, qcom, or mtk)")
-	csvFile := flag.String("csv", "", "Local file path for GPIO map CSV")
-	outputFile := flag.String("output", "", "Output file path")
-	flag.Parse()
+// Run executes the AP firmware GPIO configuration generation logic.
+func Run(args []string) error {
+	fs := flag.NewFlagSet("coreboot_gpio", flag.ContinueOnError)
+	soc := fs.String("soc", "", "SoC type (intel, qcom, or mtk)")
+	csvFile := fs.String("csv", "", "Local file path for GPIO map CSV")
+	outputFile := fs.String("output", "", "Output file path")
+
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
+		return err
+	}
+	if len(fs.Args()) > 0 {
+		return fmt.Errorf("unexpected arguments: %v", fs.Args())
+	}
 
 	if *soc == "" {
-		fmt.Fprintln(os.Stderr, "Error: --soc flag is required")
-		flag.Usage()
-		os.Exit(1)
+		return fmt.Errorf("--soc flag is required")
 	}
 
 	if *csvFile == "" {
-		fmt.Fprintln(os.Stderr, "Error: --csv flag is required")
-		flag.Usage()
-		os.Exit(1)
-	}
-
-	var outputWriter io.Writer
-	if *outputFile != "" {
-		f, err := os.Create(*outputFile)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error creating output file: %v\n", err)
-			os.Exit(1)
-		}
-		defer f.Close()
-		outputWriter = f
-	} else {
-		outputWriter = os.Stdout
+		return fmt.Errorf("--csv flag is required")
 	}
 
 	// Open the local CSV file
 	file, err := os.Open(*csvFile)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error opening CSV file: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("opening CSV file: %w", err)
 	}
 	defer file.Close()
 
@@ -118,36 +113,63 @@ func main() {
 	fmt.Fprintf(os.Stderr, "Reading GPIO map from: %s\n", *csvFile)
 
 	reader := csv.NewReader(file)
+	reader.FieldsPerRecord = -1
 	records, err := reader.ReadAll()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error parsing CSV: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("parsing CSV: %w", err)
 	}
+
+	var outputWriter io.Writer
+	var outCloser io.Closer
+	if *outputFile != "" {
+		dir := filepath.Dir(*outputFile)
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("creating output directory: %w", err)
+		}
+		f, err := os.Create(*outputFile)
+		if err != nil {
+			return fmt.Errorf("creating output file: %w", err)
+		}
+		outCloser = f
+		outputWriter = f
+	} else {
+		outputWriter = os.Stdout
+	}
+	defer func() {
+		if outCloser != nil {
+			_ = outCloser.Close()
+		}
+	}()
 
 	switch *soc {
 	case "intel":
 		err := processIntelGPIOs(records, outputWriter)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error processing Intel GPIOs: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("processing Intel GPIOs: %w", err)
 		}
 	case "qcom", "mtk":
 		gpioPins, err := parseGenericCSV(records)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error parsing CSV: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("parsing CSV: %w", err)
 		}
 		fmt.Fprintln(os.Stderr, "Successfully parsed GPIO pin data.")
 		for _, pin := range gpioPins {
 			fmt.Fprintf(outputWriter, "- Name: %s, Pin: %d, Function: %s\n", pin.Name, pin.Pin, pin.Function)
 		}
 	default:
-		fmt.Fprintf(os.Stderr, "Error: Unsupported SoC '%s'. Must be one of 'intel', 'qcom', or 'mtk'.\n", *soc)
-		flag.Usage()
-		os.Exit(1)
+		return fmt.Errorf("unsupported SoC '%s'. Must be one of 'intel', 'qcom', or 'mtk'", *soc)
+	}
+
+	if outCloser != nil {
+		if err := outCloser.Close(); err != nil {
+			return fmt.Errorf("closing output file: %w", err)
+		}
+		outCloser = nil
 	}
 
 	if *outputFile != "" {
 		fmt.Fprintf(os.Stderr, "Parsed data written to %s\n", *outputFile)
 	}
+
+	return nil
 }

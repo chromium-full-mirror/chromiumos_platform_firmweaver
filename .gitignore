@@ -1,8 +1,6 @@
 # Binaries
-ec_fw/ec_fw
-ap_fw/gpio_tool
-
-# Go test binaries
+firmweaver
+cov.out
 *.test
 
 # IDEs

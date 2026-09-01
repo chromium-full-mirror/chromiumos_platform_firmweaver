@@ -18,47 +18,27 @@ and contribute them to the concerned project.
 
 *   **Automatic Generation**: Generates firmware objects from hardware sheets.
 *   **Supported Outputs**:
-    *   EC Devicetree (`ec_fw`)
-    *   AP GPIO Configuration (`ap_fw`)
+    *   AP GPIO Configuration (`coreboot_gpio`, alias: `gpio`)
+    *   EC Devicetree (`zephyr_dtsi`, alias: `dtsi`)
 
 ## Getting Started
 
-### Building the GPIO Tool
+### Building Firmweaver
 
-The GPIO tool is located in the `ap_fw` directory.
+Build the `firmweaver` binary from the repository root:
 
-1. Navigate to the `ap_fw` directory:
-   ```bash
-   cd ap_fw
-   ```
-2. Build the tool:
-   ```bash
-   go build -o gpio_tool
-   ```
-   This will generate the `gpio_tool` executable in the `ap_fw` directory.
-
-### Building the EC Devicetree Generator
-
-The EC Devicetree generator is located in the `ec_fw` directory. See [`ec_fw/README.md`](ec_fw/README.md) for full details.
-
-1. Navigate to the `ec_fw` directory:
-   ```bash
-   cd ec_fw
-   ```
-2. Build the tool:
-   ```bash
-   go build -o ec_fw
-   ```
-   This will generate the `ec_fw` executable in the `ec_fw` directory.
+```bash
+go build -o firmweaver .
+```
 
 ## Usage
 
-### Running the GPIO Tool
+### Running the Coreboot GPIO Tool
 
-The `gpio_tool` parses a GPIO map CSV file and generates C configuration code.
+The `coreboot_gpio` (alias: `gpio`) parses a GPIO map CSV file and generates C configuration code.
 
 ```bash
-./ap_fw/gpio_tool --soc <soc_type> --csv <path_to_csv> [--output <path_to_output_c_file>]
+./firmweaver coreboot_gpio --soc <soc_type> --csv <path_to_csv> [--output <path_to_output_c_file>]
 ```
 
 #### Arguments:
@@ -69,22 +49,24 @@ The `gpio_tool` parses a GPIO map CSV file and generates C configuration code.
 #### Example:
 To generate Intel GPIO configuration from the provided example CSV:
 ```bash
-./ap_fw/gpio_tool --soc intel --csv ap_fw/test/ExampleGpio.csv --output ap_fw/test/gpio_config.c
+./firmweaver coreboot_gpio --soc intel --csv coreboot_gpio/test/ExampleGpio.csv --output coreboot_gpio/test/gpio_config.c
 ```
+*(You can also use the shorthand `./firmweaver gpio ...`)*
 
-### Running the EC Devicetree Generator
+### Running the EC Zephyr Devicetree Generator
 
-The `ec_fw` tool parses an EC pinout CSV spreadsheet and generates Zephyr devicetree overlays.
+The `zephyr_dtsi` (alias: `dtsi`) parses an EC pinout CSV spreadsheet and generates Zephyr devicetree overlays.
 
 ```bash
-./ec_fw/ec_fw --chip <chip_name> --csv <path_to_csv> [--pin-col <variant>] [--output <path_to_output_dtsi>]
+./firmweaver zephyr_dtsi --chip <chip_name> --csv <path_to_csv> [--pin-col <variant>] [--output <path_to_output_dtsi>]
 ```
 
 #### Example:
 To generate Nuvoton NPCX9 Devicetree overlay from the provided example CSV:
 ```bash
-./ec_fw/ec_fw --chip npcx99 --csv ec_fw/test/ExampleEcPinout.csv --pin-col "NPCX99 (NPCX)" --output ec_fw/test/generated.dtsi
+./firmweaver zephyr_dtsi --chip npcx99 --csv zephyr_dtsi/test/ExampleEcPinout.csv --pin-col "NPCX99 (NPCX)" --output zephyr_dtsi/test/generated.dtsi
 ```
+*(You can also use the shorthand `./firmweaver dtsi ...`)*
 
 ## Testing
 

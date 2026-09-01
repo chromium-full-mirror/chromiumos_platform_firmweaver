@@ -1,6 +1,6 @@
-# `ec_fw` Test & Example Directory
+# `zephyr_dtsi` Test & Example Directory
 
-This directory contains reference example files for validating and testing the `ec_fw` EC Devicetree generator.
+This directory contains reference example files for validating and testing the `zephyr_dtsi` EC Devicetree generator.
 
 ---
 
@@ -18,10 +18,10 @@ This directory contains reference example files for validating and testing the `
 Run the following command from the repository root:
 
 ```bash
-go run ./ec_fw --chip=npcx99 \
-               --csv=ec_fw/test/ExampleEcPinout.csv \
+./firmweaver dtsi --chip=npcx99 \
+               --csv=zephyr_dtsi/test/ExampleEcPinout.csv \
                --pin-col="NPCX99 (NPCX)" \
-               --output=ec_fw/test/generated.dtsi
+               --output=zephyr_dtsi/test/generated.dtsi
 ```
 
 ### 2. Generate Reference Devicetree (`IT82002` Variant - ITE IT82002)
@@ -29,8 +29,8 @@ go run ./ec_fw --chip=npcx99 \
 To generate for an ITE-based variant from the same spreadsheet:
 
 ```bash
-go run ./ec_fw --chip=it82002 \
-               --csv=ec_fw/test/ExampleEcPinout.csv \
+./firmweaver dtsi --chip=it82002 \
+               --csv=zephyr_dtsi/test/ExampleEcPinout.csv \
                --pin-col="IT82002 (ITE)" \
-               --output=ec_fw/test/generated_ite.dtsi
+               --output=zephyr_dtsi/test/generated_ite.dtsi
 ```
