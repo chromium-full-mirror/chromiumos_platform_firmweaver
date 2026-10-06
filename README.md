@@ -23,12 +23,23 @@ and contribute them to the concerned project.
 
 ## Getting Started
 
-### Building Firmweaver
+### Running Firmweaver
 
-Build the `firmweaver` binary from the repository root:
+Run `./firmweaver` from this directory. On first use (and after source
+changes) it builds the tool for your machine into `.bin/`. Requires Go on
+your `PATH`.
 
 ```bash
-go build -o firmweaver .
+./firmweaver --help
+```
+
+### Building for Development
+
+To build without running, write the binary to `.bin/` (where `./firmweaver`
+looks for it). Don't use `-o firmweaver`; that overwrites the wrapper script.
+
+```bash
+go build -o .bin/firmweaver .
 ```
 
 ### Authentication

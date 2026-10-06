@@ -1,0 +1,19 @@
+#!/bin/bash
+# Copyright 2026 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Builds firmweaver for this machine when the sources change, then runs it.
+
+set -e
+
+dir="$(dirname "$(readlink -f "$0")")"
+bin="${dir}/.bin/firmweaver"
+
+if [[ ! -x "${bin}" || -n "$(find "${dir}" \( -name '*.go' -o -name 'go.*' -o -name '*.json' \) -newer "${bin}")" ]]; then
+  echo "Building firmweaver (only needed on first run or after source changes)..." >&2
+  mkdir -p "$(dirname "${bin}")"
+  (cd "${dir}" && go build -o "${bin}" .) >&2
+fi
+
+exec "${bin}" "$@"

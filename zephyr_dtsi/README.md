@@ -83,15 +83,7 @@ To generate for the Fatcat **ITE** variant:
                --output=/path/to/platform/ec/zephyr/program/fatcat/generated_ite.dtsi
 ```
 
-### 3. Building and Running Binary
-Build the standalone `zephyr_dtsi` binary from the repository root:
-
-```bash
-go build -o firmweaver .
-./firmweaver dtsi --chip=it82202ax --csv=/path/to/hylia.csv --output=generated.dtsi
-```
-
-### 4. Adding Custom Chip Pin Maps
+### 3. Adding Custom Chip Pin Maps
 To register custom EC chip models at runtime without modifying code:
 1. Create a JSON file (e.g. `custom_chip.json`):
    ```json
@@ -109,7 +101,7 @@ To register custom EC chip models at runtime without modifying code:
    ./firmweaver dtsi --chip-data-dir=/path/to/custom_chips --chip=custom_chip --csv=board.csv
    ```
 
-### 5. Running Tests
+### 4. Running Tests
 Run unit tests across the `zephyr_dtsi` tool:
 
 ```bash

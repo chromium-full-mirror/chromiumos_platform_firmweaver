@@ -1,5 +1,5 @@
 # Binaries
-firmweaver
+/.bin/
 cov.out
 *.test
 
