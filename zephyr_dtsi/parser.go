@@ -71,6 +71,30 @@ func findCol(header []string, candidates ...string) int {
 	return -1
 }
 
+func findPinCol(header []string, pinCol string) int {
+	if pinCol != "" {
+		return findCol(header, pinCol)
+	}
+	for _, cand := range columnAliases["PinNumber"] {
+		normCand := normalize(cand)
+		for i, name := range header {
+			if strings.EqualFold(normalize(name), normCand) {
+				return i
+			}
+		}
+	}
+	for i, name := range header {
+		lower := strings.ToLower(name)
+		if strings.Contains(lower, "name") || strings.Contains(lower, "type") || strings.Contains(lower, "desc") {
+			continue
+		}
+		if strings.Contains(lower, "pin") || strings.Contains(lower, "bga") || strings.Contains(lower, "ball") {
+			return i
+		}
+	}
+	return -1
+}
+
 // findHeaderRow scans the first 10 rows for a row containing both Pin and Net columns.
 func findHeaderRow(records [][]string, pinCol string) ([]string, [][]string, error) {
 	if len(records) == 0 {
@@ -82,14 +106,13 @@ func findHeaderRow(records [][]string, pinCol string) ([]string, [][]string, err
 		limit = len(records)
 	}
 
-	pinCandidates := append([]string{pinCol}, columnAliases["PinNumber"]...)
 	for i := 0; i < limit; i++ {
 		row := records[i]
 		if len(row) < 2 {
 			continue
 		}
 
-		pinIdx := findCol(row, pinCandidates...)
+		pinIdx := findPinCol(row, pinCol)
 		netIdx := findCol(row, columnAliases["NetName"]...)
 
 		if pinIdx >= 0 && netIdx >= 0 {
@@ -101,9 +124,12 @@ func findHeaderRow(records [][]string, pinCol string) ([]string, [][]string, err
 	for i := 0; i < limit; i++ {
 		row := records[i]
 		netIdx := findCol(row, columnAliases["NetName"]...)
-		pinIdx := findCol(row, pinCandidates...)
+		pinIdx := findPinCol(row, pinCol)
 		if netIdx >= 0 && pinIdx == -1 {
-			return nil, nil, fmt.Errorf("missing required column for Pin Number (checked --pin-col=%q, 'PinNumber', 'Pin')", pinCol)
+			if pinCol != "" {
+				return nil, nil, fmt.Errorf("missing required column for Pin Number (checked --pin-col=%q)", pinCol)
+			}
+			return nil, nil, fmt.Errorf("missing required column for Pin Number (checked 'PinNumber', 'Pin', 'Ball', package headers)")
 		}
 		if pinIdx >= 0 && netIdx == -1 {
 			return nil, nil, fmt.Errorf("missing required column for Net Name (checked 'NetName', 'Signal Name')")
@@ -277,15 +303,11 @@ func ParseRecords(records [][]string, pinCol string) ([]PinConfig, error) {
 }
 
 func parseRows(header []string, rows [][]string, pinCol string) ([]PinConfig, error) {
-	col := func(key string, extra ...string) int {
-		cands := columnAliases[key]
-		if len(extra) > 0 {
-			cands = append(extra, cands...)
-		}
-		return findCol(header, cands...)
+	col := func(key string) int {
+		return findCol(header, columnAliases[key]...)
 	}
 
-	pinIdx := col("PinNumber", pinCol)
+	pinIdx := findPinCol(header, pinCol)
 	netIdx := col("NetName")
 
 	if pinIdx < 0 || pinIdx >= len(header) {
@@ -335,12 +357,12 @@ func parseRows(header []string, rows [][]string, pinCol string) ([]PinConfig, er
 	var configs []PinConfig
 	for _, row := range rows {
 		netName := cell(row, netIdx)
-		if isIgnoredSignal(netName) {
+		rawIO := strings.ToUpper(cell(row, ioIdx))
+		sigType := strings.ToUpper(cell(row, typeIdx))
+		if sigType != "UNUSED_IN" && sigType != "UNUSED_OUT" && isIgnoredSignal(netName) {
 			continue
 		}
 
-		rawIO := strings.ToUpper(cell(row, ioIdx))
-		sigType := strings.ToUpper(cell(row, typeIdx))
 		rawDir := cell(row, dirIdx)
 		enumVal := strings.Trim(strings.ReplaceAll(cell(row, enumIdx), `""`, `"`), `"`)
 

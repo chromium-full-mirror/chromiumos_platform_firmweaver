@@ -348,3 +348,32 @@ func TestChips_ResolveTACH(t *testing.T) {
 		}
 	}
 }
+
+func TestChips_ResolveITEUART(t *testing.T) {
+	ite := getChipOrFatal(t, "it82002")
+	npcx := getChipOrFatal(t, "npcx99")
+
+	tests := []struct {
+		chip         *Chip
+		pinNum       string
+		expectedPort int
+		expectErr    bool
+	}{
+		{ite, "A3", 0, false},  // SOUT0/GPB1
+		{ite, "B11", 1, false}, // SOUT1/PS2DAT0/GPF1
+		{ite, "A4", 0, true},   // SIN0/GPB0 (RX, not SOUT)
+		{ite, "Z99", 0, true},  // Pin not found
+		{npcx, "F4", 0, true},  // Not an ITE chip
+	}
+
+	for _, tt := range tests {
+		port, err := tt.chip.ResolveITEUART(tt.pinNum)
+		if (err != nil) != tt.expectErr {
+			t.Errorf("%s ResolveITEUART(%s) error status: expected err=%t, got %v", tt.chip.Name, tt.pinNum, tt.expectErr, err)
+			continue
+		}
+		if !tt.expectErr && port != tt.expectedPort {
+			t.Errorf("%s ResolveITEUART(%s) expected port=%d, got %d", tt.chip.Name, tt.pinNum, tt.expectedPort, port)
+		}
+	}
+}

@@ -251,3 +251,34 @@ func TestParseRecords_FormulaErrors(t *testing.T) {
 		t.Fatalf("Expected fallback pin B3, got: %+v", configs)
 	}
 }
+
+func TestParseCSV_PackageHeaderAutoDetection(t *testing.T) {
+	csvData := `"128-pin VFBGA",IT82002 Pin Name,GPIO,Signal Name,Dir,Type
+M5,PWM0/GPA0,GPA0,EC_VOLDN_BTN_ODL,,UNUSED_IN
+M7,PWM6/SSCK/GPA6,GPA6,NC,,UNUSED_IN
+C1,SMDAT2ALT/GPF7,GPF7,NC,,
+L1,WRST#,WRST#,EC_ERST_L,IN,INPUT_L
+`
+	configs, err := ParseCSV(strings.NewReader(csvData), "")
+	if err != nil {
+		t.Fatalf("ParseCSV failed: %v", err)
+	}
+	if len(configs) != 3 {
+		t.Fatalf("Expected 3 configs (NC with UNUSED_IN kept, plain NC skipped), got %d: %+v", len(configs), configs)
+	}
+	if configs[0].PinNumber != "M5" || configs[0].PinName != "PWM0/GPA0" || configs[0].PinTypeOverride != "UNUSED_IN" {
+		t.Errorf("Unexpected config[0]: %+v", configs[0])
+	}
+	if configs[1].PinNumber != "M7" || configs[1].NetName != "NC" || configs[1].PinTypeOverride != "UNUSED_IN" {
+		t.Errorf("Unexpected config[1]: %+v", configs[1])
+	}
+	if configs[2].PinNumber != "L1" || configs[2].PinName != "WRST#" || configs[2].NetName != "EC_ERST_L" {
+		t.Errorf("Unexpected config[2]: %+v", configs[2])
+	}
+
+	// Ensure "IT82002 Pin Name" alone is not mistaken for a PinNumber column
+	noPinNumCSV := "IT82002 Pin Name,Signal Name\nPWM0/GPA0,EC_FOO\n"
+	if _, err := ParseCSV(strings.NewReader(noPinNumCSV), ""); err == nil || !strings.Contains(err.Error(), "missing required column for Pin Number") {
+		t.Errorf("Expected missing Pin Number column error when only Pin Name is present, got %v", err)
+	}
+}

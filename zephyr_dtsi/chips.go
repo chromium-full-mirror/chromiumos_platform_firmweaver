@@ -31,6 +31,7 @@ var (
 	iteSda        = regexp.MustCompile(`SMDAT([0-9]+[A-Z]*)`)
 	npcxTachRegex = regexp.MustCompile(`^T([A-Z])([0-9])$`)
 	iteTachRegex  = regexp.MustCompile(`^TACH([0-9])([A-Z])$`)
+	iteSoutRegex  = regexp.MustCompile(`^SOUT([0-9]+)$`)
 )
 
 type ChipData struct {
@@ -217,6 +218,25 @@ func (c *Chip) ResolveTACH(pinNum string) (int, string, error) {
 	}
 
 	return 0, "", fmt.Errorf("pin %s (%s) does not support TACH", pinNum, pinDef)
+}
+
+// ResolveITEUART returns the 0-based SOUT index (e.g. 0 for SOUT0, 1 for SOUT1) if the pin supports ITE UART TX.
+func (c *Chip) ResolveITEUART(pinNum string) (int, error) {
+	pinDef, ok := c.PinMap[pinNum]
+	if !ok {
+		return 0, fmt.Errorf("pin %s not found in chip %s", pinNum, c.Name)
+	}
+	for _, part := range strings.Split(pinDef, "/") {
+		part = strings.TrimSpace(part)
+		if m := iteSoutRegex.FindStringSubmatch(part); m != nil {
+			idx, err := strconv.Atoi(m[1])
+			if err != nil {
+				return 0, fmt.Errorf("invalid SOUT index %q in %s: %v", m[1], pinDef, err)
+			}
+			return idx, nil
+		}
+	}
+	return 0, fmt.Errorf("pin %s (%s) does not support UART TX", pinNum, pinDef)
 }
 
 var chips = map[string]*Chip{}

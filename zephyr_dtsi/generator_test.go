@@ -330,19 +330,12 @@ func TestIntegration_ExampleEcPinout_With_RealChip(t *testing.T) {
 			t.Fatalf("GenerateDTSI failed: %v", err)
 		}
 
-		output := buf.String()
-		requiredNodes := []string{
-			"named-adc-channels",
-			"named-gpios",
-			"named-i2c-ports",
-			"&adc0",
-			"&pwm0",
+		expected, err := os.ReadFile("test/generated_npcx.dtsi")
+		if err != nil {
+			t.Fatalf("Failed to read test/generated_npcx.dtsi: %v", err)
 		}
-
-		for _, req := range requiredNodes {
-			if !strings.Contains(output, req) {
-				t.Errorf("Generated DTSI missing expected node structure %q", req)
-			}
+		if buf.String() != string(expected) {
+			t.Errorf("Generated NPCX99 DTSI differs from test/generated_npcx.dtsi.\nGot:\n%s\nWant:\n%s", buf.String(), string(expected))
 		}
 	})
 
@@ -362,23 +355,12 @@ func TestIntegration_ExampleEcPinout_With_RealChip(t *testing.T) {
 			t.Fatalf("GenerateDTSI failed: %v", err)
 		}
 
-		output := buf.String()
-		requiredNodes := []string{
-			"named-adc-channels",
-			"named-gpios",
-			"named-i2c-ports",
-			"&adc0",
-			"&i2c1",
-			"&pwm1",
-			"&pwm6",
-			"&tach0",
-			"&kbd",
+		expected, err := os.ReadFile("test/generated_ite.dtsi")
+		if err != nil {
+			t.Fatalf("Failed to read test/generated_ite.dtsi: %v", err)
 		}
-
-		for _, req := range requiredNodes {
-			if !strings.Contains(output, req) {
-				t.Errorf("Generated DTSI missing expected node structure %q", req)
-			}
+		if buf.String() != string(expected) {
+			t.Errorf("Generated IT82002 DTSI differs from test/generated_ite.dtsi.\nGot:\n%s\nWant:\n%s", buf.String(), string(expected))
 		}
 	})
 }
@@ -418,4 +400,191 @@ func TestGenerateDTSI_IsGPIOBranches(t *testing.T) {
 	if strings.Contains(out, "gpio_ec_gpio_d5") {
 		t.Error("Expected D5 to NOT be processed as GPIO because PinTypeOverride is INVALID_GPIO")
 	}
+}
+
+func TestGenerateDTSI_NonGPIOHardwarePinsAndUnusedPins(t *testing.T) {
+	chip := &Chip{
+		Name:   "ite-mock",
+		Vendor: "ite",
+		PinMap: map[string]string{
+			"L1": "WRST#",
+			"G6": "VCORE",
+			"K6": "VCC1_RST#/GPO77",
+			"M5": "PWM0/GPA0",
+			"A6": "FMISO/GPG5",
+			"M7": "PWM6/SSCK/GPA6",
+		},
+	}
+
+	configs := []PinConfig{
+		{PinNumber: "L1", NetName: "EC_ERST_L", Dir: "IN", PinTypeOverride: "INPUT_L"},
+		{PinNumber: "G6", NetName: "VCORE_CAP", PinTypeOverride: "UNUSED_IN"},
+		{PinNumber: "K6", NetName: "PLT_EC_RST_ODL", Dir: "IN", PinTypeOverride: "INPUT_L"},
+		{PinNumber: "A6", NetName: "EN_PP5000_USBA_VBUS", Dir: "OUT", PinTypeOverride: "UNUSED_OUT", InitialCondition: "LOW", Pull: "DOWN"},
+		{PinNumber: "M7", NetName: "NC", PinTypeOverride: "UNUSED_IN", Pull: "UP"},
+		{PinNumber: "M5", NetName: "EC_VOLDN_BTN_ODL", PinTypeOverride: "UNUSED_IN"},
+	}
+
+	var buf bytes.Buffer
+	if err := GenerateDTSI(&buf, configs, chip); err != nil {
+		t.Fatalf("GenerateDTSI failed: %v", err)
+	}
+
+	out := buf.String()
+	if strings.Contains(out, "ec_erst_l") || strings.Contains(out, "plt_ec_rst_odl") || strings.Contains(out, "en_pp5000_usba_vbus") {
+		t.Errorf("Expected non-GPIO hardware pins, *EC_RST_ODL, and UNUSED_OUT to be excluded from named-gpios:\n%s", out)
+	}
+
+	expectedUnused := strings.Join([]string{
+		"\tunused-pins {",
+		"\t\tcompatible = \"unused-gpios\";",
+		"\t\tunused-gpios =",
+		"\t\t\t/* EC_VOLDN_BTN_ODL */",
+		"\t\t\t<&gpioa 0 (GPIO_INPUT)>,",
+		"\t\t\t/* NC */",
+		"\t\t\t<&gpioa 6 (GPIO_INPUT | GPIO_PULL_UP)>,",
+		"\t\t\t/* EN_PP5000_USBA_VBUS */",
+		"\t\t\t<&gpiog 5 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN | GPIO_OUTPUT_INIT_LOW)>;",
+		"\t};",
+	}, "\n")
+	if !strings.Contains(out, expectedUnused) {
+		t.Errorf("Expected unused-pins block:\n%s\nGot:\n%s", expectedUnused, out)
+	}
+
+	// Unknown pin not in chip.PinMap should still fail
+	badConfigs := []PinConfig{{PinNumber: "Z99", NetName: "BAD_PIN", Dir: "IN"}}
+	buf.Reset()
+	if err := GenerateDTSI(&buf, badConfigs, chip); err == nil || !strings.Contains(err.Error(), "failed to resolve GPIO for pin Z99") {
+		t.Errorf("Expected error for unknown pin Z99, got %v", err)
+	}
+}
+
+func TestGenerateDTSI_PeripheralParity(t *testing.T) {
+	t.Run("NPCX_KbdSleep_Tach_I2CCtrl", func(t *testing.T) {
+		chip := &Chip{
+			Name:   "npcx-mock",
+			Vendor: "npcx",
+			PinMap: map[string]string{
+				"B2": "GPIOB4/I2C0_SDA0",
+				"B3": "GPIOB5/I2C0_SCL0",
+				"F5": "GPIOF5/TB1",
+				"G1": "KSI0/GPIO31",
+				"G2": "KSO01/GPIO21",
+			},
+		}
+		configs := []PinConfig{
+			// I2C_CLOCK without IO="OD" (e.g. Fatcat NPCX C12)
+			{PinNumber: "B3", NetName: "EC_I2C_PD_SCL_R", Enum: "I2C_PORT_PD", PinTypeOverride: "I2C_CLOCK"},
+			{PinNumber: "B2", NetName: "EC_I2C_PD_SDA_R", IO: "OD", PinTypeOverride: "I2C_DATA"},
+			{PinNumber: "F5", NetName: "EC_FAN_TACH", PinTypeOverride: "TACH"},
+			{PinNumber: "G1", NetName: "EC_KSI0", PinTypeOverride: "KEYBOARD"},
+			{PinNumber: "G2", NetName: "EC_KSO01", PinTypeOverride: "KEYBOARD"},
+		}
+
+		var buf bytes.Buffer
+		if err := GenerateDTSI(&buf, configs, chip); err != nil {
+			t.Fatalf("GenerateDTSI failed: %v", err)
+		}
+		out := buf.String()
+
+		expectedSnippets := []string{
+			"&i2c_ctrl0 {\n\tstatus = \"okay\";\n};",
+			"&i2c0_0 {",
+			"port = <NPCX_TACH_PORT_B>;",
+			"sample-clk = <NPCX_TACH_FREQ_LFCLK>;",
+			"pulses-per-round = <2>;",
+			"pinctrl-1 = <\n\t\t&ksi0_gpio_gp31\n\t\t&kso01_gpio_gp21\n\t>;",
+			"pinctrl-names = \"default\", \"sleep\";",
+		}
+		for _, snip := range expectedSnippets {
+			if !strings.Contains(out, snip) {
+				t.Errorf("NPCX output missing expected snippet:\n%s\nGot:\n%s", snip, out)
+			}
+		}
+	})
+
+	t.Run("ITE_KbdSleep_Tach", func(t *testing.T) {
+		chip := &Chip{
+			Name:   "ite-mock",
+			Vendor: "ite",
+			PinMap: map[string]string{
+				"D6": "TACH0A/GPD6",
+				"G1": "KSI0/GPG1",
+				"G2": "KSO0/GPG2",
+			},
+		}
+		configs := []PinConfig{
+			{PinNumber: "D6", NetName: "EC_FAN_TACH", PinTypeOverride: "TACH"},
+			{PinNumber: "G1", NetName: "EC_KSI0", PinTypeOverride: "KEYBOARD"},
+			{PinNumber: "G2", NetName: "EC_KSO0", PinTypeOverride: "KEYBOARD"},
+		}
+
+		var buf bytes.Buffer
+		if err := GenerateDTSI(&buf, configs, chip); err != nil {
+			t.Fatalf("GenerateDTSI failed: %v", err)
+		}
+		out := buf.String()
+
+		expectedSnippets := []string{
+			"channel = <IT8XXX2_TACH_CHANNEL_A>;",
+			"pulses-per-round = <2>;",
+			"pinctrl-1 = <\n\t\t&ksi0_sleep\n\t\t&kso0_sleep\n\t>;",
+			"pinctrl-names = \"default\", \"sleep\";",
+		}
+		for _, snip := range expectedSnippets {
+			if !strings.Contains(out, snip) {
+				t.Errorf("ITE output missing expected snippet:\n%s\nGot:\n%s", snip, out)
+			}
+		}
+	})
+}
+
+func TestGenerateDTSI_ITE_UART(t *testing.T) {
+	chip := &Chip{
+		Name:   "ite-mock",
+		Vendor: "ite",
+		PinMap: map[string]string{
+			"A3": "SOUT0/GPB1",
+			"A4": "SIN0/GPB0",
+			"N3": "SOUT1/GPH2/ID2",
+			"M3": "SIN1/GPH1/ID1",
+		},
+	}
+
+	t.Run("NonDefaultUART2Only", func(t *testing.T) {
+		configs := []PinConfig{
+			{PinNumber: "N3", NetName: "UART_EC_TX_DBG_RX", PinTypeOverride: "UART_TX"},
+			{PinNumber: "M3", NetName: "UART_DBG_TX_EC_RX", PinTypeOverride: "UART_RX"},
+		}
+		var buf bytes.Buffer
+		if err := GenerateDTSI(&buf, configs, chip); err != nil {
+			t.Fatalf("GenerateDTSI failed: %v", err)
+		}
+		out := buf.String()
+		for _, snip := range []string{
+			"&uart1 {\n\tstatus = \"disabled\";\n};",
+			"&ite_uart1_wrapper {\n\tstatus = \"disabled\";\n};",
+			"&uart2 {\n\tstatus = \"okay\";\n\tcurrent-speed = <115200>;\n};",
+			"&ite_uart2_wrapper {\n\tstatus = \"okay\";\n\tpinctrl-0 = <\n\t\t&uart2_rx_gph1_default\n\t\t&uart2_tx_gph2_default\n\t>;\n\tpinctrl-names = \"default\";\n};",
+		} {
+			if !strings.Contains(out, snip) {
+				t.Errorf("Expected non-default UART2 snippet:\n%s\nGot:\n%s", snip, out)
+			}
+		}
+	})
+
+	t.Run("DualUART_ConsoleOnUART1", func(t *testing.T) {
+		configs := []PinConfig{
+			{PinNumber: "A3", NetName: "UART_EC_TX_DBG_RX", PinTypeOverride: "UART_TX"},
+			{PinNumber: "N3", NetName: "EC_BASE_TX", PinTypeOverride: "UART_TX"},
+		}
+		var buf bytes.Buffer
+		if err := GenerateDTSI(&buf, configs, chip); err != nil {
+			t.Fatalf("GenerateDTSI failed: %v", err)
+		}
+		out := buf.String()
+		if strings.Contains(out, "&uart1") || strings.Contains(out, "&uart2") {
+			t.Errorf("Expected no UART override when SOUT0 (uart1) is present, got:\n%s", out)
+		}
+	})
 }
