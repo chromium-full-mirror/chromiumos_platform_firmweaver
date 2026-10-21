@@ -206,7 +206,12 @@ func Run(args []string) (runErr error) {
 		if err != nil {
 			return fmt.Errorf("processing Intel GPIOs: %w", err)
 		}
-	case "qcom", "mtk":
+	case "qcom":
+		err := processQcomGPIOs(records, outputWriter)
+		if err != nil {
+			return fmt.Errorf("processing Qcom GPIOs: %w", err)
+		}
+	case "mtk":
 		gpioPins, err := parseGenericCSV(records)
 		if err != nil {
 			return fmt.Errorf("parsing CSV: %w", err)

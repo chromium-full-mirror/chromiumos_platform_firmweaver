@@ -1,0 +1,45 @@
+,,Pad #,Wakeup interrupt,Pad name,Pad group,Pad Voltage,Pad voltage in CRD,"Pull
+(default:options)","Programmable
+I2C pull-up
+available","CRD reference schematic
+net name",CRD Reference Schematic Function,"CRD Rework","ExampleBoard Net Name",ExampleBoard Schematic net name,ExampleBoard Function,Boot configuration,"Function 0","Alternate function 1","Alternate function 2","Alternate function 3","Alternate function 4","Alternate function 5","Alternate function 6",EGPIO enable,"EGPIO
+alternate function 1","EGPIO
+alternate function 2"
+,,–,Y,GPIO_0,–,1.8,1.2,PD:nppukp,N,AUX_I2C_SDA_1P2,"Keyboard (EC) I2C SDA",,I2C_0_TP_SDA,I2C_0_TP_SDA,Trackpad I2C SDA,–,–,QUP0_SE0_L0,IBI_I3C_QUP0_SE0_SDA,–,–,–,–,–,–,–
+,,–,–,GPIO_1,–,1.8,1.2,PD:nppukp,N,AUX_I2C_SCL_1P2,"Keyboard (EC) I2C SCL",,I2C_0_TP_SCL,I2C_0_TP_SCL,Trackpad I2C SCL,–,–,QUP0_SE0_L1,IBI_I3C_QUP0_SE0_SCL,–,–,–,–,–,–,–
+,,–,Y,GPIO_3,–,1.8,1.2,PD:nppukp,N,TPAD_INT_N_1P2,"Trackpad interrupt",,TPAD_INT#_LS,TPAD_INT#_LS,"Trackpad interrupt",–,–,QUP0_SE0_L3,–,–,–,–,–,–,–,–
+,,–,Y,GPIO_6,–,1.8,1.8,PD:nppukp,N,NC,Not connected,,EUSB3_RESET#,EUSB3_RESET#,,–,–,QUP0_SE1_L2,–,–,–,–,–,–,–,–
+,,–,–,GPIO_10,–,1.8,1.8,PD:nppukp,N,NC,Not connected,,EUSB5_RESET#,EUSB5_RESET#,,–,–,QUP0_SE2_L2,–,–,–,–,–,–,–,–
+,,–,–,GPIO_12,–,1.8,1.8,PD:nppukp,Y,USB0_I2C_SDA,USB0 Controller/Re-timer I2C SDA,,I2C_2_USBC0_SDA,I2C_2_SDA,USB0 Controller/Re-timer I2C SDA,–,–,QUP0_SE3_L0,QUP0_SE7_L2,–,–,–,–,–,–,–
+,,–,Y,GPIO_13,–,1.8,1.8,PD:nppukp,Y,USB0_I2C_SCL,USB0 Controller/Re-timer I2C SCL,,I2C_2_USBC0_SCL,I2C_2_SCL,USB0 Controller/Re-timer I2C SCL,–,–,QUP0_SE3_L1,QUP0_SE7_L3,–,–,–,–,–,–,–
+,,–,–,GPIO_14,–,1.8,1.8,PD:nppukp,Y,USB1_I2C_SDA,USB1 Controller/Re-timer I2C SDA,,I2C_3_USBC1_SDA,I2C_3_SDA,USB1 Controller/Re-timer I2C SDA,–,–,QUP0_SE3_L2,QUP0_SE7_L0,–,–,–,–,–,–,–
+,,–,Y,GPIO_15,–,1.8,1.8,PD:nppukp,Y,USB1_I2C_SCL,USB1 Controller/Re-timer I2C SCL,,I2C_3_USBC1_SCL,I2C_3_SCL,USB1 Controller/Re-timer I2C SCL,–,–,QUP0_SE3_L3,QUP0_SE7_L1,–,–,–,–,–,–,–
+,,–,Y,GPIO_19,–,1.8,1.8,PD:nppukp,N,NC,Not connected,,AP_WP_ODL,AP_WP_ODL,Write protect signal to AP from GSC,–,–,QUP0_SE4_L3,QUP0_SE2_L6,–,–,–,–,–,–,–
+,,–,–,GPIO_22,–,1.8,1.8,PD:nppukp,N,NC,Not connected,,EN_PWR_FP,EN_PWR_FP,Power enable for fingerprint sensor module,–,–,QUP0_SE5_L2,QUP0_SE3_L5,–,–,–,–,–,–,–
+,,–,Y,GPIO_23,–,1.8,1.8,PD:nppukp,N,NC,Not connected,,FPMCU_INT#,FPMCU_INT#,Fingerprint MCU interrupt signal,–,–,QUP0_SE5_L3,QUP0_SE3_L4,–,–,–,–,–,–,–
+,,–,Y,GPIO_24,–,1.8,1.8,PD:nppukp,Y,NC,Not connected,,AP_FP_FW_UP_STRAP,AP_FP_FW_UP_STRAP,FPMCU programming strap pin,–,–,QUP0_SE6_L0,–,–,–,–,–,–,–,–
+,,–,–,GPIO_25,–,1.8,1.8,PD:nppukp,Y,FP_RESET,Fingerprint reset,,FP_RESET#,FP_RESET,FP reset signal,–,–,QUP0_SE6_L1,–,–,–,–,–,–,–,–
+,,–,–,GPIO_40,–,1.8,1.8,PD:nppukp,Y,NC,Not connected,,SOC_I2C_GSC_SDA,SOC_I2C_GSC_SDA,SOC to GSC I2C Interface,–,–,QUP1_SE2_L0,–,–,–,–,–,–,–,–
+,,–,–,GPIO_41,–,1.8,1.8,PD:nppukp,Y,NC,Not connected,,SOC_I2C_GSC_SCL,SOC_I2C_GSC_SCL,SOC to GSC I2C Interface,–,–,QUP1_SE2_L1,–,–,–,–,–,–,–,–
+,,–,–,GPIO_48,–,1.8,1.8,PD:nppukp,Y,TS0_RESET_N,Touchscreen reset (Active Low),,TS0_RESET#,TS0_RESET#,Touchscreen reset (Active Low),–,–,QUP1_SE4_L0,–,–,–,–,–,–,–,–
+,,–,–,GPIO_52,–,1.8,1.8,PD:nppukp,Y,NC,Not connected,,EC_SPI_MISO,EC_SPI_MISO,EC to SOC SPI communication interface,–,–,QUP1_SE5_L0,QUP1_SE7_L2,–,–,–,–,–,–,–
+,,–,Y,GPIO_53,–,1.8,1.8,PD:nppukp,Y,NC,Not connected,,EC_SPI_MOSI,EC_SPI_MOSI,EC to SOC SPI communication interface,–,–,QUP1_SE5_L1,QUP1_SE7_L3,–,–,–,–,–,–,–
+,,–,–,GPIO_54,–,1.8,1.8,PD:nppukp,Y,NC,Not connected,,EC_SPI_SCLK,EC_SPI_SCLK,EC to SOC SPI communication interface,–,–,QUP1_SE5_L2,QUP1_SE7_L0,–,–,–,–,–,–,–
+,,–,Y,GPIO_55,–,1.8,1.8,PD:nppukp,Y,NC,Not connected,,EC_SPI_CS#,EC_SPI_CS#,EC to SOC SPI communication interface,–,–,QUP1_SE5_L3,QUP1_SE7_L1,–,–,–,–,–,–,–
+,,–,Y,GPIO_67,–,1.8,1.8,PD:nppukp,N,KYBD_INT_N,Keyboard interrupt (EC) (Active Low),,KYBD_INT#,KYBD_INT#,Keyboard interrupt (EC) (Active Low),–,–,QUP2_SE0_L3,QUP2_SE3_L4,–,–,–,–,–,–,–
+,,–,–,GPIO_70,–,1.8,1.8,PD:nppukp,N,EDP_REG_EN,eDP Display Regulator enable,,EDP_REG_EN,EDP_REG_EN,eDP Display Regulator enable,–,–,QUP2_SE1_L2,–,–,–,–,–,–,–,–
+,,–,Y,GPIO_71,–,1.8,1.8,PD:nppukp,N,NC,Not connected,,SD_CARD_DET#,SD_CARD_DET#,SD card detect,–,–,QUP2_SE1_L3,–,–,–,–,–,–,–,–
+,,–,Y,GPIO_80,–,1.8,1.8,PD:nppukp,Y,ADSP_I2C_SDA,ADSP I2C SDA (Charger/fuel gauge),,I2C_5_ADSP_SDA,I2C_5_SDA,ADSP I2C SDA (Charger/fuel gauge),–,–,QUP2_SE4_L0,–,–,–,–,–,–,–,–
+,,–,Y,GPIO_81,–,1.8,1.8,PD:nppukp,Y,ADSP_I2C_SCL,ADSP I2C SCL (Charger/fuel gauge),,I2C_5_ADSP_SCL,I2C_5_SCL,ADSP I2C SCL (Charger/fuel gauge),–,–,QUP2_SE4_L1,QUP2_SE2_L4,–,–,–,–,–,–,–
+,,–,Y,GPIO_91,–,1.8,1.8,PD:nppukp,N,NC,Not connected,,GSC_AP_INT_ODL,GSC_AP_INT_ODL,GSC to AP interrupt,–,–,QUP2_SE6_L3,–,–,–,–,–,–,–,–
+,,–,Y,GPIO_92,–,1.8,1.8,PD:nppukp,N,HALL_INT_N,Hall sensor interrupt,,LID_INT#,LID_INT#,Hall sensor interrupt,–,–,–,–,–,–,–,–,–,–,–
+,,–,–,GPIO_119,–,1.8,1.8,PD:nppukp,N,EDP0_HOT_PLUG_DETECT,eDP0 hot plug detect,,EDP0_HPD,EDP0_HPD,eDP0 hot plug detect,–,–,EDP0_HOT_PLUG_DETECT,–,–,–,–,–,–,–,–
+,,–,Y,GPIO_175,–,1.8,1.8,PD:nppukp,N,USB1_PWR_1P8_EN,USB1 retimer power enable - 1.8 V,,USB4_1_PWR_1P8_EN,USB4_1_PWR_1P8_EN,USB1 retimer power enable - 1.8 V,–,–,–,–,–,–,–,–,–,–,–
+,,–,–,GPIO_176,–,1.8,1.8,PD:nppukp,N,USB1_RESET_N,USB1 retimer reset (Active Low),,USB4_1_RESET#,USB4_1_RESET#,USB1 retimer reset (Active Low),–,–,–,–,–,–,–,–,–,–,–
+,,–,–,GPIO_186,–,1.8,1.8,PD:nppukp,N,USB1_PWR_3P3_EN,USB1 retimer power enable - 3.3 V,,USB4_1_PWR_3P3_EN,USB4_1_PWR_3P3_EN,USB1 retimer power enable - 3.3 V,BOOT_CONFIG[9],–,EUSB2_AC_EN,–,–,–,–,–,–,–,–
+,,–,–,GPIO_188,–,1.8,1.8,PD:nppukp,N,USB1_PWR_1P15_EN,USB1 retimer power enable,,USB4_1_PWR_0P9_EN,USB4_1_PWR_0P9_EN,USB1 retimer power enable,–,–,–,–,–,–,–,–,–,–,–
+,,–,–,GPIO_202,–,1.8,1.2,PD:nppukp,N,WSA_SWR0_CLK_1P2,WSA 0&1 Soundwire - clock,,SNDW_0_SCL_R,SNDW_0_SCL_R,WSA 0&1 Soundwire - clock,–,–,–,–,–,–,–,–,LPASS_10,LPI_I2S2_CLK,WSA_SWR_CLK
+,,–,Y,GPIO_203,–,1.8,1.2,PD:nppukp,N,WSA_SWR0_DATA_1P2,WSA 0&1 Soundwire - data,,SNDW_0_SDA_R,SNDW_0_SDA_R,WSA 0&1 Soundwire - data,–,–,–,–,–,–,–,–,LPASS_11,LPI_I2S2_WS,WSA_SWR_DATA
+,,–,–,GPIO_204,–,1.8,1.2,PD:nppukp,N,WSA0_EN_1P2,WSA 0 enable,,WSA0_EN,WSA0_EN,WSA 0 enable,–,–,–,–,–,–,–,–,LPASS_12,LPI_DMIC3_CLK,LPI_I2S3_CLK
+,,–,–,GPIO_205,–,1.8,1.2,PD:nppukp,N,WSA1_EN_1P2,WSA 1 enable,,WSA1_EN,WSA1_EN,WSA 1 enable,–,–,–,–,–,–,–,–,LPASS_13,LPI_DMIC3_DATA,LPI_I2S3_WS
+,,–,–,GPIO_206,–,1.8,1.8,PD:nppukp,N,CAM_PM_EM_EN,Camera PMIC enable,,CAM_PM_EM_EN,CAM_PM_EM_EN,Camera PMIC enable,–,–,–,–,–,–,–,–,LPASS_14,SWR_TX_DATA2,EXT_MCLK1_D

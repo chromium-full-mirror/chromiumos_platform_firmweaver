@@ -68,17 +68,25 @@ The `coreboot_gpio` (alias: `gpio`) parses a GPIO map CSV file or Google Sheet a
 *   `--sheet-tab`: Optional specific sheet tab title to read.
 *   `--output`: Path to the output file. If omitted, output is written to stdout.
 
-#### Example:
+#### Example (Intel):
 To generate Intel GPIO configuration from the provided example CSV:
 ```bash
 ./firmweaver coreboot_gpio --soc intel --csv coreboot_gpio/test/ExampleGpio.csv --output coreboot_gpio/test/gpio_config.c
 ```
 *(You can also use the shorthand `./firmweaver gpio ...`)*
 
+#### Example (Qualcomm):
+To generate Qualcomm multi-stage AP GPIO configuration from the provided example CSV:
+```bash
+./firmweaver coreboot_gpio --soc qcom --csv coreboot_gpio/test/ExampleQcomGpio.csv --output coreboot_gpio/test/qcom_gpio_config.c
+```
+
 Or directly from a Google Sheet:
 ```bash
 ./firmweaver coreboot_gpio --soc intel --sheet "go/firmweaver-example-gpio-go-link" --output coreboot_gpio/test/gpio_config.c
 ```
+
+For detailed architecture and design decisions (including Qualcomm multi-stage heuristic classification), see [`coreboot_gpio/README.md`](coreboot_gpio/README.md).
 
 ### Running the EC Zephyr Devicetree Generator
 

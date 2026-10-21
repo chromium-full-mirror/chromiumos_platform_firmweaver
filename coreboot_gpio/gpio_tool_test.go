@@ -66,6 +66,27 @@ func TestGpioTool_RunSuccess(t *testing.T) {
 	}
 }
 
+func TestGpioTool_RunQcomSuccess(t *testing.T) {
+	t.Setenv(metrics.DisableMetricsEnv, "1")
+	out := filepath.Join(t.TempDir(), "qcom_gpio.c")
+	err := Run([]string{
+		"--soc=qcom",
+		"--csv=test/ExampleQcomGpio.csv",
+		"--output=" + out,
+	})
+	if err != nil {
+		t.Fatalf("Run(--soc=qcom) failed: %v", err)
+	}
+
+	content, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatalf("failed to read output file: %v", err)
+	}
+	if !strings.Contains(string(content), "default_gpio_table") {
+		t.Errorf("expected output to contain default_gpio_table, got: %s", string(content))
+	}
+}
+
 const (
 	googleSheetsBaseURL = "https://docs.google.com/spreadsheets/"
 	mockSpreadsheetID   = "mock-test-spreadsheet-id-placeholder-12345"
